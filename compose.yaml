@@ -1,41 +1,31 @@
-version: '3.8'
-
 services:
-  db:
-    image: postgres:latest
-    restart: always
-    ports:
-      - "5432:5432"
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: nextjs_db
-    volumes:
-      - db_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:alpine
-    restart: always
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-
-  nextjs-app:
-    build: .
+  app:
+    build: 
+      context: .
+    image: myapp:latest
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: postgres://user:password@db:5432/nextjs_db
-      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://akshat:password@db:5432/mydatabase
+      NODE_ENV: development
     depends_on:
       - db
-      - redis
-    volumes:
-      - .:/app
-    stdin_open: true
-    tty: true
+    develop:
+      watch :
+        - action : sync
+          path : ./src
+          target : /app/src
+          ignore : ['**/node_modules/**', '**/dist/**']
+        - action : rebuild
+          path : ./package.json
+          target : /app/package.json
+          ignore : ['**/node_modules/**', '**/dist/**']
 
-volumes:
-  db_data:
-  redis_data:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: akshat
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: mydatabase
+    ports:
+      - "5432:5432"
