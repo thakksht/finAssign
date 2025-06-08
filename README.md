@@ -1,77 +1,24 @@
-# FinSight - Personal Finance Tracker
-
-FinSight is a responsive, full-stack personal finance tracker web application that provides users with a clean, intuitive UI to manage their financial transactions and view visual insights.
-
-## Features
-
-- Add, edit, delete transactions (amount, date, description)
-- View a list of all transactions
-- Monthly expense bar chart visualization
-- Form validation for transaction fields
-- Responsive design with elegant UI
-- Optimized performance with Redis caching
-
-## Tech Stack
-
-**Frontend:**
-- Next.js (App Router)
-- Tailwind CSS
-- shadcn/ui components
-- Recharts for data visualization
-
-**Backend:**
-- Next.js API routes
-- Prisma ORM
-- PostgreSQL (Docker containerized)
-- Redis (caching layer)
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
 
-### Prerequisites
+First, run the development server:
 
-- Node.js 18+ installed
-- Docker and Docker Compose installed
-- Git installed
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/finsight.git
-cd finsight
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Run the setup script to start Docker containers and initialize the database:
-```bash
-# For Windows PowerShell
-npm run setup
-# or for bash
-bash setup.sh
-```
-
-4. Start the development server:
 ```bash
 npm run dev
+# or
+yarn dev
+# or
+pnpm dev
+# or
+bun dev
 ```
 
-5. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-### Working with the Database
+You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
-- To view and edit the database directly, run:
-```bash
-npm run db:studio
-```
-
-- If you make changes to the Prisma schema, apply them with:
-```bash
-npm run db:push
-```
+This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
 
