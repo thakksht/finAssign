@@ -11,18 +11,13 @@ export default function Home() {
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mb-8">
             A simple and efficient way to manage your personal finances. Track your expenses, monitor your budget, and visualize your spending patterns.
-          </p>          <div className="flex gap-4 flex-wrap justify-center">
-            <Link 
-              href="/dashboard" 
-              className="rounded-md bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
-            >
-              Dashboard
-            </Link>
+          </p>
+          <div className="flex gap-4">
             <Link 
               href="/transactions" 
-              className="rounded-md bg-purple-600 px-6 py-3 text-white font-medium hover:bg-purple-700 transition-colors"
+              className="rounded-md bg-blue-600 px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors"
             >
-              View Transactions
+              Get Started
             </Link>
             <Link 
               href="/transactions/new" 
@@ -69,20 +64,13 @@ export default function Home() {
         {/* Call to Action */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 p-8 md:p-12 rounded-2xl text-center text-white">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Ready to take control of your finances?</h2>
-          <p className="text-lg mb-6 max-w-2xl mx-auto">Start tracking your transactions today and gain insights into your spending habits.</p>          <div className="flex gap-4 justify-center flex-wrap">
-            <Link 
-              href="/dashboard" 
-              className="inline-block rounded-md bg-white px-6 py-3 text-blue-600 font-medium hover:bg-gray-100 transition-colors"
-            >
-              View Dashboard
-            </Link>
-            <Link 
-              href="/transactions" 
-              className="inline-block rounded-md bg-blue-800 px-6 py-3 text-white font-medium hover:bg-blue-900 transition-colors"
-            >
-              Manage Transactions
-            </Link>
-          </div>
+          <p className="text-lg mb-6 max-w-2xl mx-auto">Start tracking your transactions today and gain insights into your spending habits.</p>
+          <Link 
+            href="/transactions" 
+            className="inline-block rounded-md bg-white px-6 py-3 text-blue-600 font-medium hover:bg-gray-100 transition-colors"
+          >
+            Get Started Now
+          </Link>
         </div>
       </main>
     </div>
