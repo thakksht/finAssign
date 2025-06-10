@@ -213,6 +213,12 @@ export async function getMonthlyTransactionTotals() {
     const currentDate = new Date()
     const startDate = startOfMonth(subMonths(currentDate, 5)) // Last 6 months
     
+    // Define the transaction type from prisma query
+    interface TransactionData {
+      amount: number;
+      date: Date;
+    }
+    
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: DEFAULT_USER_ID,
@@ -224,10 +230,21 @@ export async function getMonthlyTransactionTotals() {
         amount: true,
         date: true,
       },
-    })
+    }) as TransactionData[]
     
-    // Group transactions by month and calculate totals
-    const monthlyTotals = transactions.reduce((acc, transaction) => {
+    // Define the type for our monthly data
+    interface MonthlyData {
+      month: string;
+      income: number;
+      expenses: number;
+      net: number;
+    }
+    
+    // Define the type for our accumulator
+    type MonthlyTotalsType = Record<string, MonthlyData>;
+    
+    // Group transactions by month and calculate totals with explicit typing
+    const monthlyTotals = transactions.reduce<MonthlyTotalsType>((acc, transaction) => {
       const month = format(transaction.date, 'MMM yyyy')
       
       if (!acc[month]) {
@@ -248,7 +265,7 @@ export async function getMonthlyTransactionTotals() {
       acc[month].net += transaction.amount
       
       return acc
-    }, {} as Record<string, {month: string, income: number, expenses: number, net: number}>)
+    }, {})
     
     // Convert to array sorted by date
     const months = Object.values(monthlyTotals).sort((a, b) => {
@@ -286,6 +303,23 @@ export async function getCategoryTotals(period: 'current-month' | 'last-month' |
         startDate = new Date(currentDate.getFullYear(), 0, 1) // January 1st of current year
         break
     }
+      // Define the Transaction interface with category
+    interface Category {
+      id: string;
+      name: string;
+      color: string;
+      userId: string;
+    }
+    
+    interface TransactionWithCategory {
+      id: string;
+      amount: number;
+      description: string;
+      date: Date;
+      userId: string;
+      categoryId: string | null;
+      category: Category | null;
+    }
     
     // First get all transactions with their categories
     const transactions = await prisma.transaction.findMany({
@@ -299,7 +333,7 @@ export async function getCategoryTotals(period: 'current-month' | 'last-month' |
       include: {
         category: true
       }
-    })
+    }) as TransactionWithCategory[]
     
     // Initialize our totals
     const incomeByCategory: Record<string, number> = {}
@@ -323,9 +357,17 @@ export async function getCategoryTotals(period: 'current-month' | 'last-month' |
       }
     })
     
+    // Define the category data interface
+    interface CategoryData {
+      name: string;
+      value: number;
+      percentage: number;
+      color: string;
+    }
+    
     // Format the category data for charts
-    const incomeCategoryData = Object.entries(incomeByCategory).map(([name, value]) => {
-      const category = transactions.find(t => 
+    const incomeCategoryData = Object.entries(incomeByCategory).map(([name, value]): CategoryData => {
+      const category = transactions.find((t: TransactionWithCategory) => 
         t.category?.name === name && t.amount > 0
       )?.category
       
@@ -337,8 +379,8 @@ export async function getCategoryTotals(period: 'current-month' | 'last-month' |
       }
     }).sort((a, b) => b.value - a.value)
     
-    const expenseCategoryData = Object.entries(expensesByCategory).map(([name, value]) => {
-      const category = transactions.find(t => 
+    const expenseCategoryData = Object.entries(expensesByCategory).map(([name, value]): CategoryData => {
+      const category = transactions.find((t: TransactionWithCategory) => 
         t.category?.name === name && t.amount < 0
       )?.category
       

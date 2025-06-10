@@ -40,7 +40,7 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
   })
   
   // Validate field on blur
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name } = e.target
     setTouched(prev => ({ ...prev, [name]: true }))
     
@@ -49,7 +49,7 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     setErrors(prev => ({ ...prev, [name]: fieldError }))
   }
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
     

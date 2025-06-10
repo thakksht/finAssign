@@ -1,15 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// For now we'll use a hardcoded user ID since we haven't implemented authentication yet
+const DEFAULT_USER_ID = 'user123'
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Get the id from params
+    const params = await context.params
     const id = params.id
+
+    // First ensure default user exists
+    await ensureUserExists()
     
+    // Get transaction by ID
     const transaction = await prisma.transaction.findUnique({
-      where: { id }
+      where: {
+        id: id,
+        userId: DEFAULT_USER_ID
+      }
     })
     
     if (!transaction) {
@@ -31,10 +43,13 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Get the id from params
+    const params = await context.params
     const id = params.id
+    
     const body = await request.json()
     
     // Validate request body
@@ -63,7 +78,8 @@ export async function PUT(
       data: {
         amount: Number(body.amount),
         description: body.description,
-        date: new Date(body.date)
+        date: new Date(body.date),
+        categoryId: body.categoryId || null
       }
     })
     
@@ -79,9 +95,11 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Get the id from params
+    const params = await context.params
     const id = params.id
     
     // Check if transaction exists
@@ -108,5 +126,22 @@ export async function DELETE(
       { error: 'Failed to delete transaction' },
       { status: 500 }
     )
+  }
+}
+
+// Helper function to ensure a default user exists in development environment
+async function ensureUserExists() {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: DEFAULT_USER_ID }
+  })
+
+  if (!existingUser) {
+    await prisma.user.create({
+      data: {
+        id: DEFAULT_USER_ID,
+        email: 'user@example.com',
+        name: 'Test User'
+      }
+    })
   }
 }

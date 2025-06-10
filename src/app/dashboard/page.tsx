@@ -19,14 +19,24 @@ export const revalidate = 0
 export default async function DashboardPage({
   searchParams
 }: {
-  searchParams: { period?: string; categoryType?: string }
+  searchParams: Promise<{ period?: string; categoryType?: string }>
 }) {
-  const period = (searchParams.period || 'current-month') as 'current-month' | 'last-month' | 'year-to-date'
-  const categoryType = (searchParams.categoryType || 'expenses') as 'income' | 'expenses'
-  
-  // Fetch all data for dashboard
+  // Await the searchParams Promise in Next.js 15
+  const params = await searchParams
+  const period = (params.period || 'current-month') as 'current-month' | 'last-month' | 'year-to-date'
+  const categoryType = (params.categoryType || 'expenses') as 'income' | 'expenses'
+    // Fetch all data for dashboard
   const categoryData = await getCategoryTotals(period)
-  const monthlyData = await getMonthlyTransactionTotals()
+  
+  // Define the MonthlyData type
+  interface MonthlyData {
+    month: string;
+    income: number;
+    expenses: number;
+    net: number;
+  }
+  
+  const monthlyData = await getMonthlyTransactionTotals() as MonthlyData[]
   const recentTransactions = await getRecentTransactions(5)
   
   // Calculate net income/expense
