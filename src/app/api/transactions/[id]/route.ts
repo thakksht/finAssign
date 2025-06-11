@@ -3,7 +3,7 @@ import { prisma } from '@/lib/db'
 
 // GET a transaction by ID
 export async function GET(
-  request: NextRequest,
+  request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -29,7 +29,7 @@ export async function GET(
   }
 }
 
-// PUT (update) a transaction by ID
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -59,7 +59,6 @@ export async function PUT(
   }
 }
 
-// DELETE a transaction by ID
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }

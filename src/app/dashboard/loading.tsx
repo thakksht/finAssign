@@ -9,7 +9,6 @@ export default function DashboardLoading() {
       </div>
 
       <div className="space-y-6">
-        {/* Summary Cards - Income, Expenses, Balance */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => (
             <Card key={i}>
@@ -46,8 +45,6 @@ export default function DashboardLoading() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Recent Transactions */}
         <Card>
           <CardHeader>
             <div className="h-5 w-40 bg-gray-200 rounded animate-pulse"></div>

@@ -38,12 +38,9 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     categoryId: initialData?.categoryId || ''
   })
-  
-  // Attempt to auto-categorize based on description
   const autoCategorize = (description: string, isIncome: boolean) => {
     const desc = description.toLowerCase();
     
-    // Common expense keywords
     const expenseKeywords: Record<string, string[]> = {
       'Food': ['grocery', 'groceries', 'restaurant', 'dinner', 'lunch', 'breakfast', 'food', 'takeout', 'meal', 'cafe', 'coffee'],
       'Rent': ['rent', 'housing', 'mortgage', 'apartment'],
@@ -54,8 +51,7 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
       'Shopping': ['shopping', 'clothes', 'store', 'amazon', 'online', 'retail', 'purchase', 'mall', 'shoe'],
       'Travel': ['travel', 'vacation', 'hotel', 'flight', 'airbnb', 'booking', 'trip']
     };
-    
-    // Common income keywords
+
     const incomeKeywords: Record<string, string[]> = {
       'Salary': ['salary', 'wage', 'paycheck', 'payment', 'direct deposit', 'work', 'job'],
       'Freelance': ['freelance', 'client', 'project', 'consulting', 'gig', 'contract'],
@@ -63,14 +59,11 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
       'Investments': ['dividend', 'interest', 'investment', 'stocks', 'bonds', 'crypto', 'stock'],
       'Refunds': ['refund', 'reimbursement', 'return', 'cashback']
     };
-    
-    // Select appropriate keywords based on transaction type
+
     const keywordMap = isIncome ? incomeKeywords : expenseKeywords;
     
-    // Search for matches
     for (const [category, keywords] of Object.entries(keywordMap)) {
       if (keywords.some(keyword => desc.includes(keyword))) {
-        // Find the category ID that matches this name
         const matchedCategory = categories.find(c => c.name === category);
         if (matchedCategory) {
           return matchedCategory.id;
@@ -78,19 +71,16 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
       }
     }
     
-    return null; // No match found
+    return null;
   };
 
-  // Validate field on blur
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name } = e.target
     setTouched(prev => ({ ...prev, [name]: true }))
     
-    // Validate the field that just lost focus
     const fieldError = validateField(name as keyof TransactionFormData, formData[name as keyof TransactionFormData])
     setErrors(prev => ({ ...prev, [name]: fieldError }))
     
-    // Try to auto-categorize when description loses focus
     if (name === 'description' && formData.amount && !formData.categoryId) {
       const isIncome = Number(formData.amount) > 0;
       const suggestedCategoryId = autoCategorize(e.target.value, isIncome);
@@ -107,38 +97,32 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
     
-    // If the field has been touched, validate it as the user types
     if (touched[name]) {
       const fieldError = validateField(name as keyof TransactionFormData, value)
       setErrors(prev => ({ ...prev, [name]: fieldError }))
     }
     
-    // For description field, try to auto-suggest a category
     if (name === 'description') {
       handleDescriptionChange(value);
     }
     
-    // Clear general error when user starts typing
     if (error) {
       setError(null)
     }
   }
   
   const validateForm = (): boolean => {
-    // Mark all fields as touched
     setTouched({
       amount: true,
       description: true,
       date: true
     })
-    
-    // Use our validation utility
+  
     const validationErrors = validateTransactionForm(formData)
     setErrors(validationErrors)
     
     const isValid = Object.keys(validationErrors).length === 0
     
-    // If form validation failed, also set a general error message
     if (!isValid) {
       setError('Please fix the errors in the form before submitting.')
     }
@@ -156,15 +140,14 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     
     setIsLoading(true)
     
-    try {      // Prepare transaction data
+    try {
       const transactionData = {
         amount: Number(formData.amount),
         description: formData.description.trim(),
         date: new Date(formData.date),
         categoryId: formData.categoryId || null,
       };
-      
-      // Additional validation right before submission
+
       if (isNaN(transactionData.amount)) {
         throw new Error('Invalid amount value');
       }
@@ -176,14 +159,12 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
       } else {
         throw new Error('Invalid form mode or missing transaction ID');
       }
-      
-      // Success! Refresh data and navigate
+
       router.refresh()
       router.push('/transactions')
     } catch (err) {
       console.error('Transaction submission error:', err)
       
-      // Provide more specific error messages based on the error type
       if (err instanceof Error) {
         if (err.message.includes('Prisma')) {
           setError('Database error occurred. Please try again.');
@@ -198,26 +179,21 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     }
   }
   
-  // Validate the form when in edit mode once initial data is loaded
   useEffect(() => {
     if (mode === 'edit' && initialData) {
-      // Pre-validate fields for edit mode
       const validationErrors = validateTransactionForm(formData);
       setErrors(validationErrors);
       
       if (Object.keys(validationErrors).length === 0) {
-        // If no errors, mark all fields as touched to show validation success indicators
         setTouched({ amount: true, description: true, date: true });
       }
     }
-  }, [mode, initialData, formData]);  // Group categories by expense/income for better UX
-  // Define predefined expense and income category keywords for categorization
+  }, [mode, initialData, formData]);
   const expenseKeywords = ['food', 'rent', 'bills', 'utilities', 'transportation', 'entertainment', 
                           'healthcare', 'shopping', 'travel', 'education', 'expense', 'other expense'];
                            
   const incomeKeywords = ['salary', 'freelance', 'gift', 'investment', 'refund', 'income', 'other income'];
   
-  // Filter categories based on their names
   const expenseCategories = categories.filter(cat => {
     const lowerCaseName = cat.name.toLowerCase();
     return expenseKeywords.some(keyword => lowerCaseName.includes(keyword));
@@ -228,9 +204,7 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     return incomeKeywords.some(keyword => lowerCaseName.includes(keyword));
   });
   
-  // Handle edge case where no categories match our filters
   if (expenseCategories.length === 0 && incomeCategories.length === 0) {
-    // If we can't categorize, split all categories evenly
     categories.forEach((cat, index) => {
       if (index % 2 === 0) {
         expenseCategories.push(cat);
@@ -240,16 +214,12 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     });
   }
   
-  // Helper function to auto-select a category based on transaction type
   useEffect(() => {
-    // Only auto-select if the user hasn't already made a choice
     if (formData.amount && !formData.categoryId && categories.length > 0) {
       const isIncome = Number(formData.amount) > 0;
       
-      // Get the appropriate category list based on transaction type
       const relevantCategories = isIncome ? incomeCategories : expenseCategories;
       
-      // Auto-select the first category if available
       if (relevantCategories.length > 0) {
         setFormData(prev => ({
           ...prev,
@@ -258,30 +228,24 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
       }
     }
   }, [formData.amount]);
-    // Helper function to determine if we're dealing with income or expense based on amount
   const isIncome = formData.amount && Number(formData.amount) > 0;
   
-  // Auto-suggest category based on description
   const handleDescriptionChange = (description: string) => {
     if (!formData.categoryId && description.length > 3) {
       const desc = description.toLowerCase();
       
-      // Try to find a matching category based on keywords in description
       let suggestedCategory = null;
       
-      // If it's a income transaction, search income categories first
       if (isIncome) {
         suggestedCategory = incomeCategories.find(cat => 
           cat.name.toLowerCase().includes(desc) || desc.includes(cat.name.toLowerCase())
         );
       } else {
-        // For expenses, search expense categories first
         suggestedCategory = expenseCategories.find(cat => 
           cat.name.toLowerCase().includes(desc) || desc.includes(cat.name.toLowerCase())
         );
       }
       
-      // If we found a match, use it
       if (suggestedCategory) {
         setFormData(prev => ({
           ...prev,
@@ -487,7 +451,6 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
           </div>
         </CardContent>
         
-        {/* Form validation summary */}
         <div className="px-6 pb-2">
           {Object.keys(touched).length > 0 && Object.keys(errors).length === 0 && (
             <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-lg text-sm flex items-center">

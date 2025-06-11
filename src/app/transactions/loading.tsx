@@ -9,12 +9,10 @@ export default function TransactionsLoading() {
         <div className="h-10 bg-gray-200 rounded w-36 mt-4 md:mt-0 animate-pulse"></div>
       </div>
       
-      {/* Chart Skeleton */}
       <div className="w-full h-[400px] bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
       
-      {/* Transactions List Skeleton */}
       <div className="mt-8">
         <div className="h-7 bg-gray-200 rounded w-48 mb-4 animate-pulse"></div>
         <Card>

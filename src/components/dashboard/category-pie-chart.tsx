@@ -29,7 +29,6 @@ export function CategoryPieChart({ data, total, title, emptyMessage = "No data a
   const handleMouseLeave = () => {
     setActiveIndex(null);
   };
-    // If no data, show empty state
   if (!data.length) {
     return (
       <Card className="w-full h-full">

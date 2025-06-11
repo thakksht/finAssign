@@ -20,7 +20,6 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
   const monthlyData = useMemo(() => {
     const data: Record<string, { month: string, expenses: number, income: number }> = {}
     
-    // Define all months to ensure they all appear in the chart
     const months = [
       'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
       'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
@@ -30,7 +29,6 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
       data[month] = { month, expenses: 0, income: 0 }
     })
     
-    // Aggregate transactions by month
     transactions.forEach(transaction => {
       const date = new Date(transaction.date)
       const monthName = date.toLocaleString('default', { month: 'short' })
@@ -43,8 +41,6 @@ export function TransactionChart({ transactions }: TransactionChartProps) {
         }
       }
     })
-    
-    // Convert to array for Recharts and sort by month order
     return Object.values(data)
   }, [transactions])
 

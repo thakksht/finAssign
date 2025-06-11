@@ -18,9 +18,7 @@ export function UncategorizedAlert({ count, amount, type }: UncategorizedAlertPr
   if (count === 0 || dismissed) {
     return null
   }
-  
-  // Only show the alert if there is a significant amount of uncategorized transactions
-  // (more than 2 transactions or more than $100)
+
   if (count <= 2 && amount < 100) {
     return null
   }
@@ -51,9 +49,9 @@ export function UncategorizedAlert({ count, amount, type }: UncategorizedAlertPr
             Review
           </Button>
           <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7"
+            variant="outline"
+            size="sm"
+            className="h-7 w-7 p-0"
             onClick={() => setDismissed(true)}
           >
             <X className="h-3.5 w-3.5" />

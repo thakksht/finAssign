@@ -38,13 +38,10 @@ export default async function DashboardPage({
   const recentTransactions = await getRecentTransactions(5)
   const budgetData = await getBudgetComparison()
   const insights = await getSpendingInsights()
-  
-  // Calculate net income/expense
   const income = categoryData.income.total
   const expenses = categoryData.expenses.total
   const net = income - expenses
   
-  // Get period name for display
   const periodName = {
     'current-month': 'This Month',
     'last-month': 'Last Month',
@@ -56,16 +53,13 @@ export default async function DashboardPage({
       <div className="space-y-6">
         <ErrorBoundary fallback={<p className="text-red-500">Error loading summary data</p>}>
           <Suspense fallback={<LoadingIndicator message="Loading summary..." />}>
-            {/* Summary Cards - Income, Expenses, Balance */}
             <SummaryCards
               income={income}
               expenses={expenses}
               net={net}
             />
           </Suspense>
-        </ErrorBoundary>
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        </ErrorBoundary>        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ErrorBoundary fallback={<p className="text-red-500">Error loading monthly summary</p>}>
             <Suspense fallback={<LoadingIndicator message="Loading monthly data..." />}>
               <div>
@@ -79,8 +73,6 @@ export default async function DashboardPage({
                   <h2 className="text-lg font-semibold">Category Breakdown</h2>
                   <CategorySelector currentType={categoryType} period={period} />
                 </div>
-                
-                {/* Uncategorized alert */}
                 <UncategorizedAlert 
                   count={categoryData[categoryType].uncategorized.count}
                   amount={categoryData[categoryType].uncategorized.amount}
@@ -104,8 +96,6 @@ export default async function DashboardPage({
             </Suspense>
           </ErrorBoundary>
         </div>
-        
-        {/* Budget and Insights Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
           <ErrorBoundary fallback={<p className="text-red-500">Error loading budget data</p>}>
             <Suspense fallback={<LoadingIndicator message="Loading budget data..." />}>
@@ -120,7 +110,6 @@ export default async function DashboardPage({
           </ErrorBoundary>
         </div>
         
-        {/* Recent Transactions */}
         <ErrorBoundary fallback={<p className="text-red-500">Error loading transactions</p>}>
           <Suspense fallback={<LoadingIndicator message="Loading transactions..." />}>
             <RecentTransactions transactions={recentTransactions} />
@@ -131,7 +120,6 @@ export default async function DashboardPage({
   )
 }
 
-// Loading indicator component
 function LoadingIndicator({ message }: { message: string }) {
   return (
     <Card className="flex items-center justify-center p-8">
@@ -142,8 +130,6 @@ function LoadingIndicator({ message }: { message: string }) {
     </Card>
   );
 }
-
-// Category type selector component
 function CategorySelector({ currentType, period }: { currentType: string, period: string }) {
   return (
     <div className="flex items-center">

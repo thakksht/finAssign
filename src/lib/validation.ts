@@ -53,10 +53,9 @@ export const validateTransactionForm = (data: Partial<TransactionFormData>): Val
 };
 
 /**
- * Validate a specific field in the transaction form
- * @param field The field to validate (amount, description, date)
- * @param value The value to validate
- * @returns An error message or undefined if valid
+ * @param field 
+ * @param value 
+ * @returns
  */
 export const validateField = (
   field: keyof TransactionFormData, 

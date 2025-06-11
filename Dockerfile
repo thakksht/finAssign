@@ -1,18 +1,15 @@
 FROM node:18
 
 WORKDIR /app
+COPY package.json package-lock.json ./
 
-# Copy package files first
-COPY package*.json ./
-
-# Install dependencies (prisma will fail here, but it's fine)
-RUN npm install || true
-
-# Copy rest of the app
+RUN npm install
 COPY . .
 
-# Generate Prisma client AFTER full context is available
 RUN npx prisma generate
+RUN npx prisma db push
+RUN npx prisma migrate deploy
 
 EXPOSE 3000
+
 CMD ["npm", "run", "dev"]

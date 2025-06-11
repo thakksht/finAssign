@@ -12,7 +12,6 @@ type SpendingInsightsProps = {
 }
 
 export function SpendingInsights({ insights }: SpendingInsightsProps) {
-  // If no insights, show empty state
   if (!insights || insights.length === 0) {
     return (
       <Card className="w-full">

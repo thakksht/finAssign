@@ -56,7 +56,6 @@ export function BudgetComparison({ data }: BudgetComparisonProps) {
       </CardTitle>
       </CardHeader>
       <CardContent>
-        {/* Overall Budget Progress Bar */}
         <div className="mb-4">          <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
             <div 
               className={`h-full ${getBudgetColor(data.percentUsed)}`}
@@ -65,7 +64,6 @@ export function BudgetComparison({ data }: BudgetComparisonProps) {
           </div>
         </div>
         
-        {/* Category Budget List */}
         <div className="space-y-4">
           {data.categories.slice(0, 5).map((item) => (
             <div key={item.category} className="space-y-1">              <div className="flex items-center justify-between text-sm">
@@ -83,8 +81,6 @@ export function BudgetComparison({ data }: BudgetComparisonProps) {
             </div>
           ))}
         </div>
-        
-        {/* Remaining budget summary */}
         <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
           <span className="text-sm font-medium">Remaining budget</span>
           <span className={`font-medium ${data.totalRemaining >= 0 ? 'text-green-600' : 'text-red-600'}`}>

@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
-// For now we'll use a hardcoded user ID since we haven't implemented authentication yet
 const DEFAULT_USER_ID = 'user123'
 
 export async function GET() {
   try {
-    // First ensure default user exists
     await ensureUserExists()
     
-    // Get all transactions
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: DEFAULT_USER_ID
@@ -33,18 +30,15 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // Validate request body
     if (!body.amount || !body.description || !body.date) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       )
     }
-    
-    // Ensure default user exists
+
     await ensureUserExists()
     
-    // Create transaction
     const transaction = await prisma.transaction.create({
       data: {
         amount: Number(body.amount),
@@ -64,7 +58,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Helper function to ensure a default user exists in development environment
 async function ensureUserExists() {
   const existingUser = await prisma.user.findUnique({
     where: { id: DEFAULT_USER_ID }

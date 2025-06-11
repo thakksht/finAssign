@@ -15,11 +15,7 @@ export default async function TransactionsPage() {
           <Button>Add New Transaction</Button>
         </Link>
       </div>
-      
-      {/* Transaction Chart */}
       <TransactionChart transactions={transactions} />
-      
-      {/* Transaction List */}
       <div className="mt-8">
         <h2 className="text-xl font-semibold mb-4">All Transactions</h2>
         <TransactionList transactions={transactions} />

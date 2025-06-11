@@ -18,7 +18,6 @@ type CategoryDetailsProps = {
 }
 
 export function CategoryDetails({ data, title, emptyMessage = "No data available" }: CategoryDetailsProps) {
-  // If no data, show empty state
   if (!data || data.length === 0) {
     return (
       <Card className="w-full h-full">
