@@ -213,12 +213,6 @@ export async function getMonthlyTransactionTotals() {
     const currentDate = new Date()
     const startDate = startOfMonth(subMonths(currentDate, 5)) // Last 6 months
     
-    // Define the transaction type from prisma query
-    interface TransactionData {
-      amount: number;
-      date: Date;
-    }
-    
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: DEFAULT_USER_ID,
@@ -230,21 +224,10 @@ export async function getMonthlyTransactionTotals() {
         amount: true,
         date: true,
       },
-    }) as TransactionData[]
+    })
     
-    // Define the type for our monthly data
-    interface MonthlyData {
-      month: string;
-      income: number;
-      expenses: number;
-      net: number;
-    }
-    
-    // Define the type for our accumulator
-    type MonthlyTotalsType = Record<string, MonthlyData>;
-    
-    // Group transactions by month and calculate totals with explicit typing
-    const monthlyTotals = transactions.reduce<MonthlyTotalsType>((acc, transaction) => {
+    // Group transactions by month and calculate totals
+    const monthlyTotals = transactions.reduce((acc, transaction) => {
       const month = format(transaction.date, 'MMM yyyy')
       
       if (!acc[month]) {
@@ -265,7 +248,7 @@ export async function getMonthlyTransactionTotals() {
       acc[month].net += transaction.amount
       
       return acc
-    }, {})
+    }, {} as Record<string, {month: string, income: number, expenses: number, net: number}>)
     
     // Convert to array sorted by date
     const months = Object.values(monthlyTotals).sort((a, b) => {
@@ -303,23 +286,6 @@ export async function getCategoryTotals(period: 'current-month' | 'last-month' |
         startDate = new Date(currentDate.getFullYear(), 0, 1) // January 1st of current year
         break
     }
-      // Define the Transaction interface with category
-    interface Category {
-      id: string;
-      name: string;
-      color: string;
-      userId: string;
-    }
-    
-    interface TransactionWithCategory {
-      id: string;
-      amount: number;
-      description: string;
-      date: Date;
-      userId: string;
-      categoryId: string | null;
-      category: Category | null;
-    }
     
     // First get all transactions with their categories
     const transactions = await prisma.transaction.findMany({
@@ -333,73 +299,83 @@ export async function getCategoryTotals(period: 'current-month' | 'last-month' |
       include: {
         category: true
       }
-    }) as TransactionWithCategory[]
-    
-    // Initialize our totals
-    const incomeByCategory: Record<string, number> = {}
-    const expensesByCategory: Record<string, number> = {}
+    })    // Initialize our totals
+    const incomeByCategoryData: Record<string, { value: number, count: number, color?: string }> = {}
+    const expensesByCategoryData: Record<string, { value: number, count: number, color?: string }> = {}
     let totalIncome = 0
     let totalExpenses = 0
-    
-    // Process all transactions
+      // Process all transactions
     transactions.forEach(transaction => {
       const categoryName = transaction.category?.name || 'Uncategorized'
+      const categoryColor = transaction.category?.color || '#71717A' // Default gray for uncategorized
       const amount = Math.abs(transaction.amount)
       
       if (transaction.amount > 0) {
         // Income
-        incomeByCategory[categoryName] = (incomeByCategory[categoryName] || 0) + amount
+        if (!incomeByCategoryData[categoryName]) {
+          incomeByCategoryData[categoryName] = { 
+            value: 0, 
+            count: 0, 
+            color: categoryColor 
+          }
+        }
+        incomeByCategoryData[categoryName].value += amount
+        incomeByCategoryData[categoryName].count += 1
         totalIncome += amount
       } else {
         // Expense
-        expensesByCategory[categoryName] = (expensesByCategory[categoryName] || 0) + amount
+        if (!expensesByCategoryData[categoryName]) {
+          expensesByCategoryData[categoryName] = { 
+            value: 0, 
+            count: 0, 
+            color: categoryColor 
+          }
+        }
+        expensesByCategoryData[categoryName].value += amount
+        expensesByCategoryData[categoryName].count += 1
         totalExpenses += amount
       }
     })
-    
-    // Define the category data interface
-    interface CategoryData {
-      name: string;
-      value: number;
-      percentage: number;
-      color: string;
-    }
-    
-    // Format the category data for charts
-    const incomeCategoryData = Object.entries(incomeByCategory).map(([name, value]): CategoryData => {
-      const category = transactions.find((t: TransactionWithCategory) => 
-        t.category?.name === name && t.amount > 0
-      )?.category
-      
+      // Format the category data for charts
+    const incomeCategoryData = Object.entries(incomeByCategoryData).map(([name, data]) => {
       return {
         name,
-        value,
-        percentage: (value / totalIncome) * 100,
-        color: category?.color || '#6366F1'
+        value: data.value,
+        count: data.count,
+        percentage: (data.value / totalIncome) * 100,
+        color: data.color || '#6366F1' // Use the color we stored when processing transactions
       }
     }).sort((a, b) => b.value - a.value)
     
-    const expenseCategoryData = Object.entries(expensesByCategory).map(([name, value]): CategoryData => {
-      const category = transactions.find((t: TransactionWithCategory) => 
-        t.category?.name === name && t.amount < 0
-      )?.category
-      
+    const expenseCategoryData = Object.entries(expensesByCategoryData).map(([name, data]) => {
       return {
         name,
-        value,
-        percentage: (value / totalExpenses) * 100,
-        color: category?.color || '#6366F1'
+        value: data.value,
+        count: data.count,
+        percentage: (data.value / totalExpenses) * 100,
+        color: data.color || '#6366F1' // Use the color we stored when processing transactions
       }
     }).sort((a, b) => b.value - a.value)
-    
+      // Get uncategorized transaction counts and amounts
+    const uncategorizedIncome = incomeByCategoryData['Uncategorized'] || { value: 0, count: 0 };
+    const uncategorizedExpenses = expensesByCategoryData['Uncategorized'] || { value: 0, count: 0 };
+
     return {
       income: {
         total: totalIncome,
-        byCategory: incomeCategoryData
+        byCategory: incomeCategoryData,
+        uncategorized: {
+          count: uncategorizedIncome.count || 0,
+          amount: uncategorizedIncome.value || 0
+        }
       },
       expenses: {
         total: totalExpenses,
-        byCategory: expenseCategoryData
+        byCategory: expenseCategoryData,
+        uncategorized: {
+          count: uncategorizedExpenses.count || 0,
+          amount: uncategorizedExpenses.value || 0
+        }
       },
       period
     }

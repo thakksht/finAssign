@@ -6,10 +6,9 @@ import Link from 'next/link'
 export default async function EditTransactionPage({
   params
 }: {
-  params: Promise<{ id: string }>
+  params: { id: string }
 }) {
-  const resolvedParams = await params
-  const transactionId = resolvedParams.id
+  const transactionId = params.id
     try {
     const transaction = await getTransaction(transactionId)
     const categories = await getCategories()

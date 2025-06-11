@@ -32,13 +32,55 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
   const [error, setError] = useState<string | null>(null)
   const [errors, setErrors] = useState<ValidationError>({})
   const [touched, setTouched] = useState<Record<string, boolean>>({})
-    const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     amount: initialData?.amount ? initialData.amount.toString() : '',
     description: initialData?.description || '',
     date: initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     categoryId: initialData?.categoryId || ''
   })
   
+  // Attempt to auto-categorize based on description
+  const autoCategorize = (description: string, isIncome: boolean) => {
+    const desc = description.toLowerCase();
+    
+    // Common expense keywords
+    const expenseKeywords: Record<string, string[]> = {
+      'Food': ['grocery', 'groceries', 'restaurant', 'dinner', 'lunch', 'breakfast', 'food', 'takeout', 'meal', 'cafe', 'coffee'],
+      'Rent': ['rent', 'housing', 'mortgage', 'apartment'],
+      'Utilities': ['utility', 'utilities', 'electric', 'electricity', 'gas', 'water', 'internet', 'wifi', 'phone', 'bill', 'cable'],
+      'Transportation': ['transport', 'transportation', 'train', 'bus', 'subway', 'taxi', 'uber', 'lyft', 'gas', 'fuel', 'car'],
+      'Entertainment': ['movie', 'entertainment', 'theatre', 'concert', 'subscription', 'streaming', 'netflix', 'disney', 'game', 'show'],
+      'Healthcare': ['doctor', 'medical', 'hospital', 'health', 'dentist', 'therapy', 'medicine', 'prescription', 'pharmacy'],
+      'Shopping': ['shopping', 'clothes', 'store', 'amazon', 'online', 'retail', 'purchase', 'mall', 'shoe'],
+      'Travel': ['travel', 'vacation', 'hotel', 'flight', 'airbnb', 'booking', 'trip']
+    };
+    
+    // Common income keywords
+    const incomeKeywords: Record<string, string[]> = {
+      'Salary': ['salary', 'wage', 'paycheck', 'payment', 'direct deposit', 'work', 'job'],
+      'Freelance': ['freelance', 'client', 'project', 'consulting', 'gig', 'contract'],
+      'Gifts': ['gift', 'present', 'birthday', 'holiday'],
+      'Investments': ['dividend', 'interest', 'investment', 'stocks', 'bonds', 'crypto', 'stock'],
+      'Refunds': ['refund', 'reimbursement', 'return', 'cashback']
+    };
+    
+    // Select appropriate keywords based on transaction type
+    const keywordMap = isIncome ? incomeKeywords : expenseKeywords;
+    
+    // Search for matches
+    for (const [category, keywords] of Object.entries(keywordMap)) {
+      if (keywords.some(keyword => desc.includes(keyword))) {
+        // Find the category ID that matches this name
+        const matchedCategory = categories.find(c => c.name === category);
+        if (matchedCategory) {
+          return matchedCategory.id;
+        }
+      }
+    }
+    
+    return null; // No match found
+  };
+
   // Validate field on blur
   const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name } = e.target
@@ -47,9 +89,21 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     // Validate the field that just lost focus
     const fieldError = validateField(name as keyof TransactionFormData, formData[name as keyof TransactionFormData])
     setErrors(prev => ({ ...prev, [name]: fieldError }))
+    
+    // Try to auto-categorize when description loses focus
+    if (name === 'description' && formData.amount && !formData.categoryId) {
+      const isIncome = Number(formData.amount) > 0;
+      const suggestedCategoryId = autoCategorize(e.target.value, isIncome);
+      
+      if (suggestedCategoryId) {
+        setFormData(prev => ({
+          ...prev,
+          categoryId: suggestedCategoryId
+        }));
+      }
+    }
   }
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
     
@@ -57,6 +111,11 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
     if (touched[name]) {
       const fieldError = validateField(name as keyof TransactionFormData, value)
       setErrors(prev => ({ ...prev, [name]: fieldError }))
+    }
+    
+    // For description field, try to auto-suggest a category
+    if (name === 'description') {
+      handleDescriptionChange(value);
     }
     
     // Clear general error when user starts typing
@@ -151,20 +210,86 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
         setTouched({ amount: true, description: true, date: true });
       }
     }
-  }, [mode, initialData, formData]);
+  }, [mode, initialData, formData]);  // Group categories by expense/income for better UX
+  // Define predefined expense and income category keywords for categorization
+  const expenseKeywords = ['food', 'rent', 'bills', 'utilities', 'transportation', 'entertainment', 
+                          'healthcare', 'shopping', 'travel', 'education', 'expense', 'other expense'];
+                           
+  const incomeKeywords = ['salary', 'freelance', 'gift', 'investment', 'refund', 'income', 'other income'];
   
-  // Group categories by expense/income for better UX
-  const expenseCategories = categories.filter(cat => 
-    ['Food', 'Rent', 'Utilities', 'Transportation', 'Entertainment', 
-     'Healthcare', 'Shopping', 'Travel', 'Education', 'Other Expenses'].includes(cat.name)
-  );
+  // Filter categories based on their names
+  const expenseCategories = categories.filter(cat => {
+    const lowerCaseName = cat.name.toLowerCase();
+    return expenseKeywords.some(keyword => lowerCaseName.includes(keyword));
+  });
   
-  const incomeCategories = categories.filter(cat => 
-    ['Salary', 'Freelance', 'Gifts', 'Investments', 'Refunds', 'Other Income'].includes(cat.name)
-  );
+  const incomeCategories = categories.filter(cat => {
+    const lowerCaseName = cat.name.toLowerCase();
+    return incomeKeywords.some(keyword => lowerCaseName.includes(keyword));
+  });
   
-  // Helper function to determine if we're dealing with income or expense based on amount
+  // Handle edge case where no categories match our filters
+  if (expenseCategories.length === 0 && incomeCategories.length === 0) {
+    // If we can't categorize, split all categories evenly
+    categories.forEach((cat, index) => {
+      if (index % 2 === 0) {
+        expenseCategories.push(cat);
+      } else {
+        incomeCategories.push(cat);
+      }
+    });
+  }
+  
+  // Helper function to auto-select a category based on transaction type
+  useEffect(() => {
+    // Only auto-select if the user hasn't already made a choice
+    if (formData.amount && !formData.categoryId && categories.length > 0) {
+      const isIncome = Number(formData.amount) > 0;
+      
+      // Get the appropriate category list based on transaction type
+      const relevantCategories = isIncome ? incomeCategories : expenseCategories;
+      
+      // Auto-select the first category if available
+      if (relevantCategories.length > 0) {
+        setFormData(prev => ({
+          ...prev,
+          categoryId: relevantCategories[0].id
+        }));
+      }
+    }
+  }, [formData.amount]);
+    // Helper function to determine if we're dealing with income or expense based on amount
   const isIncome = formData.amount && Number(formData.amount) > 0;
+  
+  // Auto-suggest category based on description
+  const handleDescriptionChange = (description: string) => {
+    if (!formData.categoryId && description.length > 3) {
+      const desc = description.toLowerCase();
+      
+      // Try to find a matching category based on keywords in description
+      let suggestedCategory = null;
+      
+      // If it's a income transaction, search income categories first
+      if (isIncome) {
+        suggestedCategory = incomeCategories.find(cat => 
+          cat.name.toLowerCase().includes(desc) || desc.includes(cat.name.toLowerCase())
+        );
+      } else {
+        // For expenses, search expense categories first
+        suggestedCategory = expenseCategories.find(cat => 
+          cat.name.toLowerCase().includes(desc) || desc.includes(cat.name.toLowerCase())
+        );
+      }
+      
+      // If we found a match, use it
+      if (suggestedCategory) {
+        setFormData(prev => ({
+          ...prev,
+          categoryId: suggestedCategory.id
+        }));
+      }
+    }
+  };
   
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -291,8 +416,7 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
               </p>
             )}
           </div>
-          
-          <div className="space-y-2">
+            <div className="space-y-2">
             <label htmlFor="categoryId" className="text-sm font-medium flex items-center justify-between">
               <span>Category</span>
               {touched.categoryId && !errors.categoryId && (
@@ -324,13 +448,15 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label="Expense Categories">
-                    {expenseCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </optgroup>
+                  {expenseCategories.length > 0 && (
+                    <optgroup label="Expense Categories">
+                      {expenseCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </>
               ) : (
                 <>
@@ -341,55 +467,20 @@ export function TransactionForm({ initialData, categories, mode = 'create' }: Tr
                       </option>
                     ))}
                   </optgroup>
-                  <optgroup label="Income Categories">
-                    {incomeCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </optgroup>
+                  {incomeCategories.length > 0 && (
+                    <optgroup label="Income Categories">
+                      {incomeCategories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </>
               )}
             </select>
             {errors.categoryId && (
               <p id="category-error" className="text-sm text-red-600 mt-1 flex items-center">
-                <span className="mr-1">⚠️</span> {errors.categoryId}
-              </p>
-            )}
-          </div>
-          
-          <div className="space-y-2">            <label htmlFor="categoryId" className="text-sm font-medium flex items-center justify-between">
-              <span>Category</span>
-              {touched.categoryId && !errors.categoryId && (
-                <span className="text-green-500 text-xs">✓ Valid</span>
-              )}
-            </label>
-            <select
-              id="categoryId"
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              required
-              aria-invalid={!!errors.categoryId}
-              aria-describedby={errors.categoryId ? "categoryId-error" : undefined}
-              className={`transition-all duration-200 block w-full rounded-md border-2 px-3 py-2 text-sm focus:outline-none ${
-                errors.categoryId 
-                  ? "border-red-500 bg-red-50" 
-                  : touched.categoryId 
-                    ? "border-green-500 bg-green-50" 
-                    : "border-gray-300 bg-white"
-              }`}
-            >
-              <option value="">Select a category</option>
-              {expenseCategories.map(category => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-            {errors.categoryId && (
-              <p id="categoryId-error" className="text-sm text-red-600 mt-1 flex items-center">
                 <span className="mr-1">⚠️</span> {errors.categoryId}
               </p>
             )}

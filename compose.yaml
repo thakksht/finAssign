@@ -15,11 +15,10 @@ services:
         - action : sync
           path : ./src
           target : /app/src
-          ignore : ['**/node_modules/**', '**/dist/**']
+          ignore : ['**/node_modules/**']
         - action : rebuild
           path : ./package.json
           target : /app/package.json
-          ignore : ['**/node_modules/**', '**/dist/**']
 
   db:
     image: postgres:latest
